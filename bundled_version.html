@@ -21,7 +21,7 @@
         },
       };
     </script>
-    <title>Counter and Chart</title>
+    <title>Počítadlo</title>
   </head>
 
   <body class="bg-gray-200">
@@ -40,14 +40,14 @@
     >
       <i
         id="minus"
-        class="fa solid fa-minus m-auto text-7xl text-cyan-700 cursor-pointer hover:text-red-700 transition-transform transform hover:scale-110"
+        class="fa solid fa-minus m-auto text-7xl text-cyan-700 cursor-pointer hover:text-red-700 transition-transform transform hover:scale-125"
       ></i>
       <h2 id="counterText" class="font-semibold font-mono text-7xl m-auto">
         0
       </h2>
       <i
         id="plus"
-        class="fa solid fa-plus m-auto text-7xl text-cyan-700 cursor-pointer hover:text-blue-700 transition-transform transform hover:scale-110"
+        class="fa solid fa-plus m-auto text-7xl text-cyan-700 cursor-pointer hover:text-blue-700 transition-transform transform hover:scale-125"
       ></i>
     </div>
 
@@ -63,7 +63,7 @@
       id="timestamp"
       class="flex flex-col items-start mt-8 p-4 max-w-md mx-auto bg-white rounded-md shadow-xl"
     >
-      <h3 class="font-bold text-xl mb-2">Timestamps:</h3>
+      <h3 class="font-bold text-xl mb-2">Záznamy:</h3>
     </div>
 
     <script>
@@ -105,17 +105,45 @@
       };
 
       const decrement = () => {
-        count -= 1;
-        if (count < 0) {
-          count = 0;
+        if (count > 0) {
+          count -= 1; //
+          updateCounter();
+
+          // Sníží počet v hourlyCounts pro aktuální hodinu
+          const currentHour = new Date().getHours();
+          if (hourlyCounts[currentHour] > 0) {
+            hourlyCounts[currentHour] -= 1;
+          }
+
+          chart.data.datasets[0].data[currentHour] =
+            hourlyCounts[currentHour] || 0;
+          chart.update();
+
+          // Odstraní poslední timestamp
+          const timestampList = timestamp.querySelectorAll("p");
+          if (timestampList.length > 0) {
+            timestamp.removeChild(timestampList[timestampList.length - 1]);
+          }
+
+          console.log(hourlyCounts);
         }
-        updateCounter();
-        timeStamp();
       };
 
-      const resetCounter = () => {
-        count = 0;
-        updateCounter();
+      const reset = () => {
+        const confirmReset = confirm("Opravdu chcete resetovat?");
+
+        if (confirmReset) {
+          count = 0;
+          hourlyCounts = {};
+          updateCounter();
+
+          // Vymaže všechny timestampy
+          timestamp.innerHTML = "";
+
+          // Resetuje data pro graf na nulu
+          chart.data.datasets[0].data = new Array(24).fill(0);
+          chart.update();
+        }
       };
 
       // Update counterText whenever count changes
@@ -137,7 +165,7 @@
 
       plusBTN.addEventListener("click", increment);
       minusBTN.addEventListener("click", decrement);
-      resetBTN.addEventListener("click", resetCounter);
+      resetBTN.addEventListener("click", reset);
 
       // Set up the chart
       const ctx = document.getElementById("myChart");
@@ -148,7 +176,7 @@
           labels: [], // Labels will be the hours (0-23)
           datasets: [
             {
-              label: "Počet zákazníků",
+              label: "Klienti",
               data: [], // The data will be populated dynamically
               borderColor: "rgba(75, 192, 192, 1)",
               fill: false,
@@ -163,13 +191,13 @@
                 display: true,
                 max: 12, // Set the max value to 24 for a full 24-hour cycle
                 min: 21, // Set the min value to 0 (midnight)
-                text: "Hour of the Day", // Title for the x-axis
+                text: "Hodina dne", // Title for the x-axis
               },
             },
             y: {
               title: {
                 display: true,
-                text: "Number of Increments", // Title for the y-axis
+                text: "Počet klientů", // Title for the y-axis
               },
               beginAtZero: true, // Start the y-axis at 0
             },
