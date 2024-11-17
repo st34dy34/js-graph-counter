@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
+    />
+
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              clifford: "#da373d",
+            },
+          },
+        },
+      };
+    </script>
+    <title>Counter and Chart</title>
+  </head>
+
+  <body class="bg-gray-200">
+    <!-- Reset Button -->
+    <div class="flex justify-center p-4">
+      <button
+        id="reset"
+        class="rounded-md bg-red-600 py-2 px-4 border border-transparent text-center font-bold text-sm text-white transition-all shadow-md hover:shadow-lg focus:bg-red-700 focus:shadow-none active:bg-red-700 hover:bg-red-700 active:shadow-none disabled:pointer-events-none disabled:opacity-50 disabled:shadow-none ml-2"
+      >
+        Reset
+      </button>
+    </div>
+    <!-- Counter Section -->
+    <div
+      class="flex flex-row justify-center items-center gap-8 mt-8 p-6 max-w-sm mx-auto bg-white rounded-xl shadow-xl"
+    >
+      <i
+        id="minus"
+        class="fa solid fa-minus m-auto text-7xl text-cyan-700 cursor-pointer hover:text-red-700 transition-transform transform hover:scale-110"
+      ></i>
+      <h2 id="counterText" class="font-semibold font-mono text-7xl m-auto">
+        0
+      </h2>
+      <i
+        id="plus"
+        class="fa solid fa-plus m-auto text-7xl text-cyan-700 cursor-pointer hover:text-blue-700 transition-transform transform hover:scale-110"
+      ></i>
+    </div>
+
+    <!-- Chart Section -->
+    <div class="flex justify-center items-center mt-8">
+      <div class="w-full max-w-lg bg-white shadow-xl rounded-md p-4">
+        <canvas id="myChart" class="w-full"></canvas>
+      </div>
+    </div>
+
+    <!-- Timestamp Section -->
+    <div
+      id="timestamp"
+      class="flex flex-col items-start mt-8 p-4 max-w-md mx-auto bg-white rounded-md shadow-xl"
+    >
+      <h3 class="font-bold text-xl mb-2">Timestamps:</h3>
+    </div>
+
+    <script>
+      let plusBTN = document.querySelector("#plus");
+      let minusBTN = document.querySelector("#minus");
+      let counterText = document.querySelector("#counterText");
+      let resetBTN = document.querySelector("#reset");
+      let timestamp = document.querySelector("#timestamp");
+
+      let hourlyCounts = {};
+      let hour_now = 14;
+      let count = 0;
+
+      const post_result = () => {
+        count += 1;
+        updateCounter();
+      };
+
+      const timeStamp = () => {
+        const currentHour = new Date().getHours(); // Get the current hour
+        const currentMinute = new Date().getMinutes(); // Get the current minute
+        const formattedTime = `${String(currentHour).padStart(2, "0")}:${String(
+          currentMinute
+        ).padStart(2, "0")}`; // Format in HH:MM
+
+        if (!hourlyCounts[currentHour]) {
+          hourlyCounts[currentHour] = 0;
+        }
+        hourlyCounts[currentHour] += 1;
+        // Append the formatted time and the hourlyCounts object to the timestamp element on a new line
+        timestamp.innerHTML += "<p>" + count + ": " + formattedTime + "</p>";
+        console.log(hourlyCounts);
+      };
+
+      const increment = () => {
+        count += 1;
+        updateCounter();
+        timeStamp();
+      };
+
+      const decrement = () => {
+        count -= 1;
+        if (count < 0) {
+          count = 0;
+        }
+        updateCounter();
+        timeStamp();
+      };
+
+      const resetCounter = () => {
+        count = 0;
+        updateCounter();
+      };
+
+      // Update counterText whenever count changes
+      const updateCounter = () => {
+        counterText.innerText = count;
+        const labels = [];
+        const data = [];
+
+        // Populate the chart data with the hourly counts
+        for (let hour = 0; hour < 24; hour++) {
+          labels.push(`${hour}:00`);
+          data.push(hourlyCounts[hour] || 0); // Default to 0 if no increments for this hour
+        }
+
+        chart.data.labels = labels; // Update the x-axis labels (hours)
+        chart.data.datasets[0].data = data; // Update the dataset with the counts per hour
+        chart.update(); // Re-render the chart
+      };
+
+      plusBTN.addEventListener("click", increment);
+      minusBTN.addEventListener("click", decrement);
+      resetBTN.addEventListener("click", resetCounter);
+
+      // Set up the chart
+      const ctx = document.getElementById("myChart");
+
+      const chart = new Chart(ctx, {
+        type: "line", // Line chart to display increments over time
+        data: {
+          labels: [], // Labels will be the hours (0-23)
+          datasets: [
+            {
+              label: "Počet zákazníků",
+              data: [], // The data will be populated dynamically
+              borderColor: "rgba(75, 192, 192, 1)",
+              fill: false,
+              tension: 0.1,
+            },
+          ],
+        },
+        options: {
+          scales: {
+            x: {
+              title: {
+                display: true,
+                max: 12, // Set the max value to 24 for a full 24-hour cycle
+                min: 21, // Set the min value to 0 (midnight)
+                text: "Hour of the Day", // Title for the x-axis
+              },
+            },
+            y: {
+              title: {
+                display: true,
+                text: "Number of Increments", // Title for the y-axis
+              },
+              beginAtZero: true, // Start the y-axis at 0
+            },
+          },
+        },
+      });
+    </script>
+  </body>
+</html>
